@@ -8,6 +8,85 @@
   box-sizing: border-box;
 }
 
+:host .header {
+  display: block;
+  position: relative;
+  margin-bottom: .5em;
+}
+
+:host .header .name {
+  text-align: left;
+}
+:host .header .headerbutton {
+  position: absolute;
+  margin: .2em;
+  min-width: 1.2em;
+  top: -.2em;
+  cursor: pointer;
+  -moz-user-select: none;
+  user-select: none;
+  border-radius: 3px;
+}
+
+:host .header .headerbutton:hover {
+  color: black;
+  background: white;
+}
+
+:host .header .trash {
+  right: 12.5em;
+}
+
+:host .header .prev {
+  right: 11em;
+}
+
+:host .header .next {
+  right: 8.5em;
+}
+
+:host .header .add {
+  right: 6em;
+}
+:host .header .text {
+  right: 3.5em;
+}
+:host .header .camera {
+  right: 1em;
+}
+
+:host .page {
+  width: 100%;
+  min-height: 20em;
+  display:block;
+  list-style: none;
+  text-align: left;
+  background: #eaeaea;
+  color: black;
+  border: 2px solid "#555";
+}
+
+:host .page ul {
+  margin: 0;
+  padding: 0;
+}
+
+:host .page li {
+  background: white;
+  list-style: none;
+  padding-bottom: .5em;
+  padding-left: 1em;
+  padding-top: .5em;
+  padding-right: 1em;
+  border-top: 1px solid #ccc;
+}
+
+:host .page li p {
+  margin: 0;
+  margin-top: .5em;
+}
+
+
 :host .output-channel {
   padding: 5px 10px;
   background: #999;
