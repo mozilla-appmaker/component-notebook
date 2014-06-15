@@ -26,7 +26,7 @@
       <div class="text headerbutton" on-click="{{wantsText}}"><i class="fa fa-header"></i></div>
       <div class="camera headerbutton" on-click="{{wantsImage}}"><i class="fa fa-camera"></i></div>
     </div>
-    <div id="page" class="page"><ul id="list"></ul></div>
+    <div id="pages" class="pages pt-perspective pt-main"></div>
     <shadow></shadow>
   </template>
   <ceci-definition>
@@ -129,20 +129,33 @@
         localStorage['hack-collection-pages'] = JSON.stringify(data);
       },
       updateDisplay: function() {
-        this.$.list.innerHTML = "";
-        var item;
-        console.log(this.getData(), this.currentPage-1)
-        var pageData = this.getData()['pages'][this.currentPage-1];
-        if (pageData) {
-          for (var i=0; i<pageData.length; i++) {
-            this.addTextToDisplay(pageData[i]);
-          }
+        // XXX this is now called way too many times. Navigation should just be via CSS
+        this.$.pages.innerHTML = "";
+        var data = this.getData();
+        var page, list, item;
+        var currentPage = this.$.pages.querySelector('.page.current');
+        if (currentPage) {
+          currentPage.classList.remove('current');
         }
-      },
-      addTextToDisplay: function(stuff) {
-        var item = document.createElement("li");
-        item.innerHTML = stuff
-        this.$.list.appendChild(item);
+        for (var pageNo=0; pageNo < data.pages.length; pageNo++) {
+          page = document.createElement('div');
+          page.className = 'page';
+          page.classList.add('pt-page');
+          if (pageNo == this.currentPage-1) {
+            page.classList.add('pt-page-current');
+          }
+          list = document.createElement('ul');
+          var pageData = data['pages'][pageNo];
+          if (pageData) {
+            for (var i=0; i<pageData.length; i++) {
+              item = document.createElement("li");
+              item.innerHTML = pageData[i];
+              list.appendChild(item);
+            }
+          }
+          page.appendChild(list);
+          this.$.pages.appendChild(page);
+        }
       },
       addImage: function(imgsrc) {
         this.addHTML("<img src='" + imgsrc + "'></img>");
@@ -151,7 +164,11 @@
         this.addHTML(markdown.toHTML(stuff));
       },
       addHTML: function(snippet) {
-        this.addTextToDisplay(snippet);
+        var pagesElt = this.$.pages.querySelectorAll('.page');
+        var pageElt = pagesElt.item(this.currentPage-1);
+        var item = document.createElement("li");
+        item.innerHTML = snippet
+        pageElt.querySelector('ul').appendChild(item);
         var data = this.getData();
         data.pages[this.currentPage-1].push(snippet);
         this.setData(data);
@@ -167,18 +184,49 @@
         this.updateDisplay();
       },
       nextPage: function() {
-        this.currentPage = Math.min(this.currentPage+1, this.getData()['pages'].length);
         var data = this.getData();
+        var pagesElt = this.$.pages.querySelectorAll('.page');
+        if (this.currentPage == data.pages.length) return;
+        var outPage = pagesElt.item(this.currentPage-1);
+        var inPage = pagesElt.item(this.currentPage);
+        function animationDone() {
+          outPage.classList.remove('pt-page-current');
+          outPage.classList.remove('pt-page-moveToLeftFade');
+          inPage.classList.remove('pt-page-moveFromRightFade');
+          inPage.removeEventListener('animationend', animationDone);
+          inPage.removeEventListener('webkitAnimationEnd', animationDone);
+        }
+        inPage.addEventListener('animationend', animationDone);
+        inPage.addEventListener('webkitAnimationEnd', animationDone);
+        outPage.classList.add('pt-page-moveToLeftFade');
+        inPage.classList.add('pt-page-current');
+        inPage.classList.add('pt-page-moveFromRightFade');
+        this.currentPage++;
         data['currentPage'] = this.currentPage;
         this.setData(data);
-        this.updateDisplay();
       },
       prevPage: function() {
-        this.currentPage = Math.max(this.currentPage-1, 1);
+        var pagesElt = this.$.pages.querySelectorAll('.page');
+        if (this.currentPage <= 1) return;
+        var outPage = pagesElt.item(this.currentPage-1);
+        var inPage = pagesElt.item(this.currentPage-2);
+        function animationDone() {
+          outPage.classList.remove('pt-page-current');
+          outPage.classList.remove('pt-page-moveToRightFade');
+          inPage.classList.remove('pt-page-moveFromLeftFade');
+          inPage.removeEventListener('animationend', animationDone);
+          inPage.removeEventListener('webkitAnimationEnd', animationDone);
+        }
+        inPage.addEventListener('animationend', animationDone);
+        inPage.addEventListener('webkitAnimationEnd', animationDone);
+        outPage.classList.add('pt-page-moveToRightFade');
+        inPage.classList.add('pt-page-current');
+        inPage.classList.add('pt-page-moveFromLeftFade');
+        var pagesElt = this.$.pages.querySelectorAll('.page');
+        this.currentPage--;
         var data = this.getData();
         data['currentPage'] = this.currentPage;
         this.setData(data);
-        this.updateDisplay();
       },
       deletePage: function() {
         var data = this.getData();
