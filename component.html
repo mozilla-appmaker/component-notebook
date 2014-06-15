@@ -18,7 +18,7 @@
     <link href="font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="component.css">
     <div id="header" class="header">
-      <div class="name">note {{currentPage}} of {{pageCount}}</div>
+      <div class="name">note {{currentPage}}/{{pageCount}}</div>
       <div class="prev headerbutton" on-click="{{prevPage}}"><i class="fa fa-angle-left"></i></div>
       <div class="next headerbutton" on-click="{{nextPage}}"><i class="fa fa-angle-right"></i></div>
       <div class="trash headerbutton" on-click="{{deletePage}}"><i class="fa fa-trash-o"></i></div>
@@ -33,7 +33,7 @@
     {
       "tags": ["data", "words"],
       "thumbnail": "./thumbnail.png",
-      "name": "notebook",
+      "name": "Notebook",
       "description": "Stores pages of stuff",
       "broadcasts": {
         "wantsPicture": {
@@ -106,38 +106,46 @@
         this.super();
         if (localStorage['hack-collection-pages'] == undefined) {
           localStorage['hack-collection-pages'] = JSON.stringify(
-            {
-            1:['text', 'some other text'],
-            2:['page 2', 'some other text'],
-            3:['page 3', 'some other text'],
-            4:['page 4', 'some other text'],
-            'pageCount': 4,
-            'currentPage': 1
+            { pages: [
+                ['<h1>First page</h1>', '<p>Notebooks can store text</p>'],
+                ['<h1>Page 2</h1>', '<p>even with markdown <strong>markup</strong></p>'],
+                ['<h1>Page 3</h1>', '<p>and even...</p>', "<img class='kitten'></img>", "kittens!"],
+              ],
+              'currentPage': 1
           });
         }
         var data = this.getData();
         this.currentPage = data['currentPage'] || 1;
-        this.pageCount = data['pageCount'] || 1;
+        this.pageCount = data['pages'].length;
         this.updateDisplay();
+      },
+      attached : function(){
+        this.super();
+      },
+      getData: function() {
+        return JSON.parse(localStorage['hack-collection-pages']);
+      },
+      setData: function(data) {
+        localStorage['hack-collection-pages'] = JSON.stringify(data);
       },
       updateDisplay: function() {
         this.$.list.innerHTML = "";
         var item;
-        var pageData = this.getData()[this.currentPage];
-        console.log("pageData.length", pageData.length);
-        for (var i=0; i<pageData.length; i++) {
-          this.addTextToDisplay(pageData[i]);
+        console.log(this.getData(), this.currentPage-1)
+        var pageData = this.getData()['pages'][this.currentPage-1];
+        if (pageData) {
+          for (var i=0; i<pageData.length; i++) {
+            this.addTextToDisplay(pageData[i]);
+          }
         }
       },
       addTextToDisplay: function(stuff) {
-        list = this.$.list;
         var item = document.createElement("li");
         item.innerHTML = stuff
-        list.appendChild(item);
+        this.$.list.appendChild(item);
       },
       addImage: function(imgsrc) {
-        var snippet = "<img src='" + imgsrc + "'></img>"
-        this.addHTML(snippet);
+        this.addHTML("<img src='" + imgsrc + "'></img>");
       },
       addText: function(stuff) {
         this.addHTML(markdown.toHTML(stuff));
@@ -145,46 +153,45 @@
       addHTML: function(snippet) {
         this.addTextToDisplay(snippet);
         var data = this.getData();
-        data[this.currentPage].push(snippet);
-        localStorage['hack-collection-pages'] = JSON.stringify(data);
+        data.pages[this.currentPage-1].push(snippet);
+        this.setData(data);
       },
       newPage: function() {
-        this.pageCount += 1;
         var data = this.getData();
-        data['pageCount'] = this.pageCount;
-        data[this.pageCount] = [];
-        localStorage['hack-collection-pages'] = JSON.stringify(data);
+        var pages = data['pages']
+        pages.splice(this.currentPage, 0, []);
+        data['pages'] = pages;
+        this.pageCount++;
+        this.currentPage++;
+        this.setData(data);
+        this.updateDisplay();
       },
       nextPage: function() {
-        this.currentPage = Math.min(this.currentPage+1, this.getData()['pageCount']);
+        this.currentPage = Math.min(this.currentPage+1, this.getData()['pages'].length);
         var data = this.getData();
         data['currentPage'] = this.currentPage;
-        localStorage['hack-collection-pages'] = JSON.stringify(data);
+        this.setData(data);
         this.updateDisplay();
       },
       prevPage: function() {
         this.currentPage = Math.max(this.currentPage-1, 1);
         var data = this.getData();
         data['currentPage'] = this.currentPage;
-        localStorage['hack-collection-pages'] = JSON.stringify(data);
+        this.setData(data);
         this.updateDisplay();
       },
       deletePage: function() {
-        this.currentPage = Math.max(this.currentPage-1, 1);
         var data = this.getData();
-        delete data[this.currentPage];
-        this.pageCount--;
-        console.log("this.currentPage", this.currentPage);
-        console.log("this.pageCount", this.pageCount);
-        if (this.pageCount == 0) {
-          this.newPage();
-        }
+        data['pages'].splice(this.currentPage-1, 1);
+        this.pageCount = data['pages'].length;
         if (this.currentPage > this.pageCount) {
           this.currentPage = this.pageCount;
         }
-        console.log("this.currentPage", this.currentPage);
-        console.log("this.pageCount", this.pageCount);
-        localStorage['hack-collection-pages'] = JSON.stringify(data);
+        this.setData(data);
+        if (this.pageCount == 0) {
+          this.newPage();
+          this.currentPage = 1;
+        }
         this.updateDisplay();
       },
       wantsPicture: function() {
@@ -192,12 +199,6 @@
       },
       wantsText: function() {
         this.broadcast("gettext", "wanttext");
-      },
-      attached : function(){
-        this.super();
-      },
-      getData: function() {
-        return JSON.parse(localStorage['hack-collection-pages']);
       },
       backgroundcolorChanged: function (oldValue, newValue) {
         this.style.backgroundColor = newValue;
