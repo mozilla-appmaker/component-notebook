@@ -10,10 +10,10 @@
 <script src="vendor/markdown/markdown.min.js"></script>
 
 <polymer-element name="ceci-notebook" extends="ceci-element"
-                 attributes="backgroundcolor textcolor name" 
-                 backgroundcolor="#000000" 
-                 textcolor="#ffffff" 
-                 name="my notes">
+                 attributes="backgroundcolor textcolor nameAttrb"
+                 backgroundcolor="#000000"
+                 textcolor="#ffffff"
+                 nameAttrb="my notes">
   <template>
     <link href="font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="component.css">
@@ -91,7 +91,7 @@
           "label": "Text Color",
           "editable": "color"
         },
-        "name": {
+        "nameAttrb": {
           "label": "Notebook Name",
           "editable": "text"
         }
